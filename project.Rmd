@@ -1,0 +1,122 @@
+---
+title: "Coursera JHU Data Science - Practical Machine Learning"
+author: "Wei Lin"
+date: "October 15, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(data.table))
+suppressPackageStartupMessages(library(caret))
+```
+
+# Data Preparation
+
+Dowload data from the link. where all `NA`, `#DIV/0!`, and `""` will be 
+treatedd as NA.
+```{r, include=FALSE}
+training <- fread(
+  "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv",
+  na.strings = c("NA", "#DIV/0!",""))
+
+testing <- fread(
+  "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv",
+  na.strings = c("NA", "#DIV/0!",""))
+```
+
+The dimensions of training and testing sets are 
+```{r}
+print('Dimension for Training:')
+dim(training)
+print('Dimension for Testing:')
+dim(testing)
+```
+
+Data cleaning job is list as follows:
+
+1. We remove the first column which is just index column
+```{r}
+training <- training %>% select(-V1)
+testing <- testing %>% select(-V1)
+```
+
+1. Remove the timestamp, which essentially serve the indexing purpose
+```{r}
+training <- training %>% select(-contains('timestamp'))
+testing <- testing %>% select(-contains('timestamp'))
+```
+
+1. Remove columns with high percentage of `NA`s
+```{r}
+high_na_cols <- names(which(training %>% is.na %>% colMeans() > 0.8))
+setDF(training)
+training <- training[, !names(training) %in% high_na_cols]
+setDF(testing)
+testing <- testing[, !names(testing) %in% high_na_cols]
+```
+
+# Dimension Reduction using PCA
+Fit a PCA model and pre-process both training and testing data sets.
+```{r}
+fit_pca <- preProcess(training, method = 'pca')
+print(fit_pca)
+training <- predict(fit_pca, training)
+testing <- predict(fit_pca, testing)
+```
+
+# Data Partition
+Further split training data set into 75% training set and 25% testing set. 
+Training set will be used to training model and testing set will be used to 
+measure out of sample prediction performance. 
+```{r}
+set.seed(1234)
+idx <- createDataPartition(training$classe, p = 0.75, list = FALSE)
+training_train <- training[idx,]
+training_test <- training[-idx,]
+```
+
+
+# Model Training
+Use 5-fold cross validation to select the best Gradient boosting machine model.
+```{r}
+suppressPackageStartupMessages(library(doParallel))
+cl <- makeCluster(3)
+registerDoParallel(cl)
+
+fit_gbm <- train(classe ~ ., data = training_train, method = 'gbm',
+                 trControl = trainControl(allowParallel = TRUE, 
+                                          method = 'cv', number = 5))
+print(fit_gbm)
+```
+
+# Model Testing
+Prediction on the 25% testing set will give the expected out of sample error.
+The confusion matrix is shown below
+```{r, comment=""}
+training_test$prediction <- predict(fit_gbm, training_test)
+confusionMatrix(table(training_test$prediction,training_test$classe))
+```
+
+The expected out of sample accuracy is 0.8204. 
+
+# Model Training use full data 
+Train the model again using full training data set with best tuned parameters 
+from previous training.
+```{r}
+fit_gbm_full <- train(classe ~ ., data = training, method = 'gbm',
+                      tuneGrid = fit_gbm$bestTune, 
+                      trControl = trainControl(allowParallel = TRUE,
+                                               method = 'none'))
+print(fit_gbm_full)
+```
+
+Use the trained model to predict the test set
+```{r}
+testing$prediction <- predict(fit_gbm_full, testing)
+print(testing[, c("problem_id","prediction")])
+```

@@ -1,0 +1,33 @@
+---
+title: "Coursera JHU Data Science - Data Product - Week 2"
+author: "Wei Lin"
+date: "November 12, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Places where I have studied
+```{r}
+library(leaflet)
+
+icons <- awesomeIcons(
+  icon = 'graduation-cap',library = 'fa'
+)
+
+my_map <- 
+  leaflet() %>% 
+  addTiles() %>% 
+  addAwesomeMarkers(
+    lat = c(29.8683, 31.2304, 42.3601, 28.5383),
+    lng = c(121.5440, 121.4737, -71.0589, -81.3792),
+    popup = c('Ningbo', 'Shanghai', 'Boston',
+              'Orlando'),
+    icon = icons
+  )
+
+my_map
+```

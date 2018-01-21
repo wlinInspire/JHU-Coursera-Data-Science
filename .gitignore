@@ -3,3 +3,16 @@
 .RData
 .Ruserdata
 *.csv
+*.Rproj
+*.txt
+*.jpg
+*.pdf
+*.zip
+*.rds
+*.rda
+*.png
+*.for
+*.xlsx
+*.xml
+*.log
+*.bz2

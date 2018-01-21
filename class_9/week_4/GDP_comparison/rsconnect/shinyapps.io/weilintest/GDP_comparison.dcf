@@ -1,0 +1,12 @@
+name: GDP_comparison
+title: GDP_comparison
+username:
+account: weilintest
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 240066
+bundleId: 1096418
+url: https://weilintest.shinyapps.io/GDP_comparison/
+when: 1511660870.90651
+asMultiple: FALSE
+asStatic: FALSE

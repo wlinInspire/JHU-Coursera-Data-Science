@@ -1,0 +1,38 @@
+---
+title: 'Data Product - Week 3'
+author: "Wei Lin"
+date: "`r Sys.Date()`"
+output: 
+  ioslides_presentation: 
+    smaller: yes
+    widescreen: yes
+---
+
+## GDP Comparison
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+suppressPackageStartupMessages(library(plotly))
+suppressPackageStartupMessages(library(data.table))
+suppressPackageStartupMessages(library(dplyr))
+library(tidyr)
+```
+
+ 
+```{r, fig.align='center'}
+us_china_gdp <- fread('us_china_gdp.csv', nrows = 2, colClasses = 'character')
+us_china_gdp <- gather(us_china_gdp, year, GDP, contains('YR'))
+setDT(us_china_gdp)
+us_china_gdp[, year := sapply(year, function(x) strsplit(x, 'YR')[[1]][2])]
+us_china_gdp[, year := sapply(year, function(x) strsplit(x, ']')[[1]][1])]
+us_china_gdp[, year := as.numeric(year)]
+us_china_gdp[, GDP := round(as.numeric(GDP))]
+
+p <- plot_ly(data = us_china_gdp,
+             x = ~year, y = ~GDP, 
+             mode = 'lines', 
+             color = ~`Country Name`, 
+             colors = c('red', 'blue'),
+             type = 'scatter') %>% 
+  layout(title = "Yearly GDP Comparison between US and China")
+p
+```

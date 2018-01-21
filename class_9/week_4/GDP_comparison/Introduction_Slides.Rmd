@@ -1,0 +1,61 @@
+---
+title: 'Data Product - Week 4'
+author: "Wei Lin"
+date: "`r Sys.Date()`"
+output: 
+  ioslides_presentation: 
+    smaller: yes
+    widescreen: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(lubridate))
+suppressPackageStartupMessages(library(data.table))
+
+us_china_gdp <- fread('us_china_gdp.csv', nrows = 2, colClasses = 'character')
+us_china_gdp <- gather(us_china_gdp, year, GDP, contains('YR'))
+setDT(us_china_gdp)
+us_china_gdp[, year := sapply(year, function(x) strsplit(x, 'YR')[[1]][2])]
+us_china_gdp[, year := sapply(year, function(x) strsplit(x, ']')[[1]][1])]
+us_china_gdp[, year := as.numeric(year)]
+
+```
+
+## Introduction
+
+This shiny application is a visualization tool for GDP comparison between US and
+China. It consists of three parts.
+
+- Inputs: Time Range Selector
+
+- Input: Comparison Metric Selector
+
+- Output: An Interactive Time Series Chart
+
+
+## Inputs
+
+Time Range Selector: 
+
+- You can select any year range between 
+`r min(us_china_gdp$year)` and `r max(us_china_gdp$year)`. The default one is 
+from `r min(us_china_gdp$year)` and `r max(us_china_gdp$year)`.
+
+
+Comparison Metric Selector: There are 4 metrics to compare the GDP of US and China.
+
+- \$:the absolute \$ amount over time
+
+- \$ Change: Year-over-Year (Current Year over Previous Year) \$ chnage over time
+
+- % Change: Year-over-Year (Current Year over Previous Year) % chnage over time
+- China/US: The Ratio of China's GDP over US's in % over time
+
+## Output
+
+An interactive time series chart based on `highcharter` r package. The content 
+changes as input values in selectors change.
+
+## Thank you

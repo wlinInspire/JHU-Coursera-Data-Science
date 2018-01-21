@@ -16,3 +16,9 @@
 *.xml
 *.log
 *.bz2
+*.rda
+*.rdb
+*.rdx
+rsconnect
+*.RData
+_cache

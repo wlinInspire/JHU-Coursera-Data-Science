@@ -1,0 +1,131 @@
+---
+title: "Coursera Capstone week 2"
+author: "Wei Lin"
+date: "1/7/2018"
+output: 
+  html_document: 
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+```
+
+## Introduction
+In this report, we will do some exploratory analysis on the English twitter, 
+blog, and news data sets. We then explain our next modeling building plan.
+
+
+```{r}
+blogs <- readLines('./final/en_US/en_US.blogs.txt', encoding = "UTF-8")
+news <- readLines('./final/en_US/en_US.news.txt', encoding = "UTF-8")
+twitter <- readLines('./final/en_US/en_US.twitter.txt', encoding = "UTF-8", 
+                     warn = FALSE)
+```
+
+## Summary statistics about the data sets.
+```{r}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(data.table))
+summary_stats <- data.table(data_source = c('blogs', 'news', 'twitter'),
+                            number_of_records = c(length(blogs), 
+                                                length(news),
+                                                length(twitter)),
+                            number_of_char = c(sum(nchar(blogs)),
+                                                     sum(nchar(news)),
+                                                     sum(nchar(twitter))),
+                            average_char_per_record = c(mean(nchar(blogs)),
+                                                     mean(nchar(news)),
+                                                     mean(nchar(twitter))),
+                            max_char_per_record = c(max(nchar(blogs)),
+                                                     max(nchar(news)),
+                                                     max(nchar(twitter))))
+                            
+DT::datatable(summary_stats) %>% 
+  DT::formatCurrency(-1, currency = '', digits = 0)
+```
+
+## Subsetting and Cleaning
+Due to large file size, we subset 1% of each file to performance effecient 
+exploratory analysis.
+```{r}
+blogs_sample <- blogs[sample(1:length(blogs), size = length(blogs) * 0.01)]
+news_sample <- news[sample(1:length(news), size = length(blogs) * 0.01)]
+twitter_sample <- twitter[sample(1:length(twitter), size = length(blogs) * 0.01)]
+```
+
+1. Remove punctuation
+2. Remove white spaces
+2. change words to lower case
+2. Remove Numbers
+
+```{r}
+suppressPackageStartupMessages(library(tm))
+corpus <- VCorpus(VectorSource(c(blogs_sample, news_sample, twitter_sample)))
+corpus <- tm_map(corpus, removePunctuation) 
+corpus <- tm_map(corpus, stripWhitespace) 
+corpus <- tm_map(corpus, content_transformer(tolower)) # Convert to lowercase
+corpus <- tm_map(corpus, removeNumbers) # Remove numbers
+```
+
+## N-Gram Distribution
+
+Coverting the corpus into document term matrix makes unstructured data structured.
+Terms can be by every n words (n >= 1).
+
+When n = 1, the distribution for most frequent terms is as follows
+```{r}
+dtm <- DocumentTermMatrix(corpus)
+most_freq_terms <- findFreqTerms(dtm,lowfreq = 2000)
+freq_df <- data.table(terms= most_freq_terms,
+                      frequency = as.matrix(dtm[, most_freq_terms]) %>% 
+                        colSums())
+ggplot(freq_df) + geom_bar(aes(x= reorder(terms, -frequency), 
+                               weight = frequency)) +
+  xlab('Terms') + ylab('Frequency') +
+  ggtitle('Single-Gram Distribution')
+```
+
+When n = 2, the distribution for most frequent terms is as follows
+```{r}
+BigramTokenizer <- function(x) {
+  unlist(lapply(ngrams(words(x), 2), paste, collapse = " "), use.names = FALSE)
+}
+    
+dtm <- DocumentTermMatrix(corpus,
+                          control = list(tokenize = BigramTokenizer))
+most_freq_terms <- findFreqTerms(dtm, lowfreq = 500)
+freq_df <- data.table(terms= most_freq_terms,
+                      frequency = as.matrix(dtm[, most_freq_terms]) %>% 
+                        colSums())
+ggplot(freq_df) + geom_bar(aes(x= reorder(terms, -frequency), 
+                               weight = frequency)) +
+  xlab('Terms') + ylab('Frequency') +
+  theme(axis.text.x=element_text(angle=90)) +
+  ggtitle('2-Gram Distribution')
+```
+
+When n = 3, the distribution for most frequent terms is as follows
+```{r}
+TrigramTokenizer <- function(x) {
+  unlist(lapply(ngrams(words(x), 3), paste, collapse = " "), use.names = FALSE)
+}
+    
+dtm <- DocumentTermMatrix(corpus,
+                          control = list(tokenize = TrigramTokenizer))
+most_freq_terms <- findFreqTerms(dtm, lowfreq = 80)
+freq_df <- data.table(terms= most_freq_terms,
+                      frequency = as.matrix(dtm[, most_freq_terms]) %>% 
+                        colSums())
+ggplot(freq_df) + geom_bar(aes(x= reorder(terms, -frequency), 
+                               weight = frequency)) +
+  xlab('Terms') + ylab('Frequency') +
+  theme(axis.text.x=element_text(angle=90)) +
+  ggtitle('3-Gram Distribution')
+```
+
+## Predictive Modeling Plan
+
+A single model is to find the n-gram that contains the first k words (k < n) that
+user has already entered, which requires us to train the entire data, 
+sort n-gram frequency, store the result, and predict the next words.

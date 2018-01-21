@@ -1,0 +1,51 @@
+# Storm Type Impact Analysis
+
+## Synopsis
+
+We found that the most harmful event type to both health and economics is tornado
+
+## Data Processing
+```{r,echo=FALSE,message=FALSE,warning=FALSE}
+library(data.table)
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE,message = FALSE,warning = FALSE,
+                      fig.align = "center",fig.height = 6,fig.width = 8)
+storm_data <- fread('repdata%2Fdata%2FStormData.csv')
+```
+
+
+## Result
+
+### Question 1
+
+Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?
+
+Sum fatalities (`FATALITIES`) and injuries (`INJURIES`) to represent the damage to populuation health
+```{r}
+health_harm_by_type <- storm_data[, .(health_harm = sum(FATALITIES + INJURIES)), EVTYPE]
+
+ggplot(health_harm_by_type %>% head(10)) + geom_bar(aes(x = EVTYPE, weight = health_harm)) + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    ggtitle('Top 10 Harmful Events in Health')
+```
+
+The most harmful one is `r health_harm_by_type[health_harm == max(health_harm), EVTYPE]`
+
+### Question 2
+
+Across the United States, which types of events have the greatest economic consequences?
+
+Summing property damage (`PROPDMG`) and crop damage (`CROPDMG`) to represent the damage to economics
+```{r}
+econ_harm_by_type <- storm_data[, .(econ_harm = sum(PROPDMG + CROPDMG)), EVTYPE]
+econ_harm_by_type <- econ_harm_by_type[order(econ_harm,decreasing = T)]
+ggplot(econ_harm_by_type %>% head(10)) + geom_bar(aes(x = EVTYPE, weight = econ_harm)) + theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    ggtitle('Top 10 Harmful Events in Economics') + 
+    ylab('$')
+```
+
+The most harmful one is `r econ_harm_by_type[econ_harm == max(econ_harm), EVTYPE]`

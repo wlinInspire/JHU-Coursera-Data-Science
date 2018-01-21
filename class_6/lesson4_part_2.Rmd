@@ -1,0 +1,48 @@
+---
+title: "Basic Inferential Data Analysis"
+author: "Wei Lin"
+date: "March 25, 2017"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE,message = FALSE,
+                      fig.height = 5)
+```
+
+## Load Data and Summary
+```{r}
+library(datasets)
+dim(ToothGrowth)
+head(ToothGrowth)
+summary(ToothGrowth)
+str(ToothGrowth)
+```
+
+## Test
+
+For dose 0.5, we compare the tooth growth by supp using t test where the null hypothesis is that the tooth growth means of the two supp types is equal to zero
+```{r}
+t.test(len ~ supp, ToothGrowth,subset = ToothGrowth$dose == 0.5)
+```
+Given low p-value (less than 0.05), we reject the null hypothesis and claim that tooth grow faster under OJ than VC when does is 0.5 
+
+
+Perform the same test for dose 1
+```{r}
+t.test(len ~ supp, ToothGrowth,subset = ToothGrowth$dose == 1)
+```
+Given low p-value (less than 0.05), we reject the null hypothesis and claim that tooth grow faster under OJ than VC when does is 1
+
+
+Perform the same test for dose 2
+```{r}
+t.test(len ~ supp, ToothGrowth,subset = ToothGrowth$dose == 2)
+```
+Given high p-value (higher than 0.05), we cannot reject the null hypothesis and claim that speed of tooth grow is the same under OJ and VC when does is 2
+
+## Conclusion
+
+The OJ makes tooth growth faster than CV when dose is low. However, the benefit diminishes when dose is high.

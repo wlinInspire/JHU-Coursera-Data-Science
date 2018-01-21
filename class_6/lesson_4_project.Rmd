@@ -1,0 +1,66 @@
+---
+title: "Central Limit Theorem Simulation for Exponential Distribution"
+author: "Wei Lin"
+date: "March 25, 2017"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+## Overview
+
+We are going to verify the the central limit theorem by simulating a number of exponential distributed random variables.
+
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE,message = FALSE,
+                      fig.height = 3)
+set.seed(10)
+```
+
+## Simulations
+
+We generation a list of 40 vectors consisting of 1000 exponential random variables
+```{r}
+random_exp <- sapply(1:1000, function(x) rexp(40, 0.2))
+```  
+ 
+## Sample Mean vs Theoretical Mean
+
+The sample mean is shown in red and theoretical mean is shown in black
+```{r}       
+library(ggplot2)
+sample_mean <- apply(random_exp, 2, mean)
+ggplot() + geom_histogram(aes(x = sample_mean)) + 
+    geom_vline(aes(xintercept = 1 / 0.2),col = 
+                   'red')
+
+```
+
+## Sample Variance vs Theoretical Variance
+
+The sample standard deviation is shown in red and theoretical standard deviation is shown in black
+```{r}       
+sample_sd <- apply(random_exp, 2, sd)
+ggplot() + geom_histogram(aes(x = sample_sd)) + 
+    geom_vline(aes(xintercept = 1 / 0.2),col = 
+                   'red')
+
+```
+
+## Distribution
+
+Distribution of 1000 random exponentials are compared with 1000 of averages of 40 random exponentials
+```{r}     
+library(tidyr)
+compare <- data.frame(
+    random_exponential =  rexp(1000, 0.2),
+    sample_mean = apply(random_exp, 2, mean))
+compare <- compare %>% gather(type, value)
+
+
+ggplot(compare) + geom_histogram(
+    aes(x = value, fill = type),bins = 100)
+
+```
+

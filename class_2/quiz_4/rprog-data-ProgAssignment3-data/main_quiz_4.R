@@ -1,0 +1,6 @@
+setwd('~/Library/Mobile Documents/com~apple~CloudDocs/DataScience/')
+setwd('./JHUDataScience/Class_2_R_programming/quiz_4/')
+setwd('./rprog-data-ProgAssignment3-data/')
+outcome <- read.csv("outcome-of-care-measures.csv", colClasses = "character")
+outcome[, 11] <- as.numeric(outcome[, 11])
+hist(outcome[, 11])

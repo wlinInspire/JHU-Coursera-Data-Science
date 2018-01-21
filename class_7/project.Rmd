@@ -1,0 +1,80 @@
+---
+title: "Regression Models Course Project"
+author: "Wei Lin"
+date: "October 2, 2017"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,fig.align = "center",
+                      fig.height = 3,fig.width = 5)
+library(ggplot2)
+library(dplyr)
+```
+
+# Executive Summary
+
+1. Manual transmission is better for MPG than automatic ones.
+
+2. Manual tranmission has 2.9358 more MPG than automatic ones.
+
+# Analysis
+
+In mtcars dataset, `am == 0` stands for automatic transmission and `am == 1` stands for manual transmission.
+
+First of we plot a box plot to show the relationship between MPG and transmission, which shows automatic transmission generally has lower mpg than m
+```{r}
+mtcars_new <- mtcars %>% 
+  mutate(transmission = ifelse(am == 0, 'Automatic', 'Manual')) %>% 
+  select(-am)
+ggplot(mtcars_new) + 
+  geom_boxplot(aes(x = transmission, y = mpg)) +
+  xlab('Cylinder') + 
+  ggtitle('Box Plot of MPG by Cylinder and Transmission')
+```
+
+We can fit a linear model of `mpg` by `transmission`. 
+```{r}
+fit <- lm(mpg ~ transmission, mtcars_new)
+coef(summary(fit))
+```
+In the fitted model, transmission has a coefficient of 7.245, which means cars with automatic tranmission has 7.245 better mpg than manual ones. P-value of the regressor shows that the relationship is significant. The fitted value and residual plot is shown below. There is no clear pattern left in the residual.
+```{r}
+ggplot() + geom_point(aes(x = fit$fitted.values, y = fit$residuals)) + 
+  xlab('Fitted Values') + ylab('Residuals') + 
+  geom_hline(aes(yintercept = 0), col = 'red')
+```
+
+Nevertheless, if we calculate the correlation matrix, we can find that the variables are highly correlated with each other in the dataset.
+```{r}
+print(cor(mtcars))
+```
+
+Therefore, this simple model does not tell the full story. If we fit a full mode, the coefficient of transmission changes and is not significant anymore. 
+```{r}
+summary(lm(mpg ~ ., data = mtcars_new)) %>% coef
+```
+
+To find a reasonable model, we can use `step` function to find the best model for explaining `mpg`
+```{r}
+best_fit <- step(lm(mpg ~ ., data = mtcars_new), trace = 0)
+summary(best_fit) %>% coef
+```
+Transmission has a coefficient of 2.9358, which means cars with automatic tranmission has 2.9358 better mpg than manual ones.
+
+The residual plot is shown below. There is no clear pattern left in the residual.
+```{r}
+ggplot() + geom_point(aes(x = best_fit$fitted.values, 
+                          y = best_fit$residuals)) + 
+  xlab('Fitted Values') + ylab('Residuals') + 
+  geom_hline(aes(yintercept = 0), col = 'red')
+```
+
+If we do an anova with and without transmission for the selected model,
+we can see the inclusion of transmission is statistically significant.
+```{r}
+anova(lm(mpg ~ wt + qsec, data = mtcars), best_fit)
+```
+

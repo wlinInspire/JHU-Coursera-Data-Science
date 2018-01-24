@@ -10,15 +10,13 @@ twitter <- readLines('./final/en_US/en_US.twitter.txt', encoding = "UTF-8",
 total <- c(blogs, news, twitter)
 rm(blogs, news, twitter)
 
-
 set.seed(1234)
 partitions <- 10
-# blog_idx <- sample(1:partitions, length(blogs), replace = TRUE)
-# news_idx <- sample(1:partitions, length(news), replace = TRUE)
-# twitter_idx <- sample(1:partitions, length(twitter), replace = TRUE)
 total_idx <- sample(1:partitions, length(total), replace = TRUE)
 total_sample <- total[total_idx == 1]
 
+total_test <- total[total_idx == 1] %>% head(100)
+save(total_test, file = 'test_set.rda')
 
 cps <- corpus(total_sample)
 

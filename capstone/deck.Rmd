@@ -1,0 +1,56 @@
+---
+title: 'Capstone Deck'
+author: "Wei Lin"
+date: "`r Sys.Date()`"
+output: 
+  ioslides_presentation: 
+    smaller: yes
+    widescreen: yes
+---
+
+```{r setup, include=FALSE}
+load(file = './model/test_result.rda')
+```
+
+## Introduction 
+
+- **Goal**: Build a web application that predicts the next word based on user inputs.
+
+- **Data**: Corpus from Twitter, Blogs, and News provided by SwiftKey
+
+- **Algorithm**: Backoff algorithm based on N-gram model trained by a subset of SwiftKey's 
+data
+
+- **Performance**: For a total of `r scales::comma(nrow(test_list))` setences, the percentage of 
+predicted top 3 candidates containing actual next word is 
+`r scales::percent(mean(test_list$last_word_actual %in% test_list$pred))`.
+
+## Algorithm Description
+
+- The n-gram model was pre-trained using 10% randomly sampled SwiftKey data set.
+
+- We trained 3 types of n-gram model for n in 2, 3, 4. 
+
+- To Predict the next word, we use Back-Off algorithm. The algorithm
+    - Step 1: tries to find matched 4-gram model. If found, returns top counted next word candidates as the 
+  result, otherwise, goes to next step
+    - Step 2: tries to find matched 3-gram model. If found, returns top counted next word candidates  as the 
+  result, otherwise, goes to next step. 
+    - Step 3: tries to find matched 2-gram model. If found, returns top counted next word candidates  as the 
+    result, otherwise, return NA.
+
+## Shiny App
+
+- **Input**: This part allows user to enter words at upper left corner. The default value is empty after the website is 
+loaded. 
+
+- **Algorithm Decomposition**: This part shows top counted next word candidates for 2,3,4-gram models.
+
+- **Final Output**: This part shows top 3 candidates based on back-off algorithm
+
+- **N-Gram Distribution**: This is the visualization to show the distribution of top 10 candidates colored by 
+ corresponding n-gram models.
+
+
+
+## Thank you!
